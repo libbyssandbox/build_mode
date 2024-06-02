@@ -48,6 +48,8 @@ end
 
 libbys.hooks.add_chat_command("build", function(ply)
 	set_build_mode(ply, true)
+
+	ply:SetCustomCollisionCheck(true)
 end)
 
 libbys.hooks.add_chat_command("pvp", function(ply)
@@ -66,5 +68,13 @@ libbys.hooks.make_unique("ScalePlayerDamage", function(ply, _, dmg)
 		dmg:ScaleDamage(0)
 
 		return true
+	end
+end)
+
+libbys.hooks.make_unique("ShouldCollide", function(ent_a, ent_b)
+	if not ent_a:IsPlayer() or not ent_b:IsPlayer() then return end
+
+	if ent_a:GetInBuildMode() or ent_b:GetInBuildMode() then
+		return false
 	end
 end)
