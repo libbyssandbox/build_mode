@@ -21,6 +21,14 @@ libbys.hooks.make_unique("EntityTakeDamage", function(ent, dmg)
 
 		return false
 	end
+
+	local inflictor = dmg:GetInflictor()
+
+	if IsValid(inflictor) and inflictor:IsPlayer() and inflictor:GetInBuildMode() then
+		dmg:ScaleDamage(0)
+
+		return false
+	end
 end)
 
 libbys.hooks.make_unique("PlayerShouldTakeDamage", function(ply, attacker)
