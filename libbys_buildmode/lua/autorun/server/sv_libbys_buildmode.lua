@@ -1,5 +1,19 @@
 require("libbys")
 
+local function check_dmg(ent)
+	if not IsValid(ent) then return true end
+
+	if ent:IsPlayer() then
+		return not ent:GetInBuildMode()
+	end
+
+	if not check_dmg(ent:GetCreator()) then return false end
+	if not check_dmg(ent:GetOwner()) then return false end
+	if not check_dmg(ent:GetParent()) then return false end
+
+	return true
+end
+
 libbys.hooks.make_unique("PlayerSpawn", function(ply)
 	if ply:GetInBuildMode() then
 		ply:GodEnable()
@@ -8,27 +22,12 @@ end)
 
 libbys.hooks.make_unique("EntityTakeDamage", function(ent, dmg)
 	if ent:IsPlayer() and ent:GetInBuildMode() then
-		dmg:ScaleDamage(0)
-
 		return false
 	end
 
 	-- Don't let godded players attack pvpers
-	local attacker = dmg:GetAttacker()
-
-	if IsValid(attacker) and attacker:IsPlayer() and attacker:GetInBuildMode() then
-		dmg:ScaleDamage(0)
-
-		return false
-	end
-
-	local inflictor = dmg:GetInflictor()
-
-	if IsValid(inflictor) and inflictor:IsPlayer() and inflictor:GetInBuildMode() then
-		dmg:ScaleDamage(0)
-
-		return false
-	end
+	if not check_dmg(dmg:GetAttacker()) then return false end
+	if not check_dmg(dmg:GetInflictor()) then return false end
 end)
 
 libbys.hooks.make_unique("PlayerShouldTakeDamage", function(ply, attacker)
