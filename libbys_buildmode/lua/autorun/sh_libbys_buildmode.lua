@@ -1,5 +1,7 @@
 AddCSLuaFile()
 
+AccessorFunc(FindMetaTable("Entity"), "m_bBuildGhosted", "IsBuildGhosted", FORCE_BOOL)
+
 AccessorFunc(FindMetaTable("Player"), "m_bBuildMode", "InBuildMode", FORCE_BOOL)
 AccessorFunc(FindMetaTable("Player"), "m_flBuildSwitchTime", "BuildSwitchTime", FORCE_NUMBER)
 
@@ -57,6 +59,21 @@ libbys.hooks.add_chat_command("pvp", function(ply)
 end)
 
 -- Needs to be shared for prediction
+libbys.hooks.make_unique("PhysgunPickup", function(ply, ent)
+	if not ply:GetInBuildMode() then return end
+
+	ent:SetIsBuildGhosted(true)
+	ent:SetCustomCollisionCheck(true)
+end)
+
+libbys.hooks.make_unique("PhysgunDrop", function(_, ent)
+	timer.Simple(1, function()
+		if not IsValid(ent) then return end
+
+		ent:SetIsBuildGhosted(false)
+	end)
+end)
+
 libbys.hooks.make_unique("PlayerNoClip", function(ply, desired_state)
 	if desired_state and not ply:GetInBuildMode() then
 		return false
@@ -65,16 +82,15 @@ end)
 
 libbys.hooks.make_unique("ScalePlayerDamage", function(ply, _, dmg)
 	if ply:GetInBuildMode() then
-		dmg:ScaleDamage(0)
-
 		return true
 	end
 end)
 
 libbys.hooks.make_unique("ShouldCollide", function(ent_a, ent_b)
-	if not ent_a:IsPlayer() or not ent_b:IsPlayer() then return end
+	if ent_a:IsPlayer() and ent_b:GetIsBuildGhosted() then return false end
+	if ent_b:IsPlayer() and ent_a:GetIsBuildGhosted() then return false end
 
-	if ent_a:GetInBuildMode() or ent_b:GetInBuildMode() then
+	if (ent_a:IsPlayer() and ent_b:IsPlayer()) and (ent_a:GetInBuildMode() or ent_b:GetInBuildMode()) then
 		return false
 	end
 end)
